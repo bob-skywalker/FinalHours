@@ -9,6 +9,56 @@ height = 600
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Final Hours")
 
+# Loading screen
+start_font = pygame.font.Font(None, 50)
+start_text = start_font.render("Start Game", True, (255, 255, 255))
+start_rect = start_text.get_rect(center=(width / 2, height / 2 - 50))
+
+exit_font = pygame.font.Font(None, 50)
+exit_text = exit_font.render("Exit Game", True, (255, 255, 255))
+exit_rect = exit_text.get_rect(center=(width / 2, height / 2 + 50))
+
+def start_game_screen():
+    while True:
+        window.fill((0, 0, 0))
+        window.blit(start_text, start_rect)
+        window.blit(exit_text, exit_rect)
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if start_rect.collidepoint(event.pos):
+                    return 
+                elif exit_rect.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+
+start_game_screen()
+
+
+
+# Game Over Screen
+game_over_font = pygame.font.Font(None, 80)
+game_over_text = game_over_font.render("Game Over", True, (255, 0, 0))
+game_over_rect = game_over_text.get_rect(center=(width / 2, height / 2))
+
+
+def game_over_screen():
+    while True: 
+        window.fill((0, 0, 0))
+        window.blit(game_over_text, game_over_rect)
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                return 
+
 
 
 # Player
@@ -104,8 +154,8 @@ while True:
         pygame.draw.rect(window, enemy_projectile_color, enemy_projectile)
 
         if player.colliderect(enemy_projectile):
-            pygame.quit()
-            sys.exit()
+            game_over_screen()
+            start_game_screen()
         
         if enemy_projectile.y > height:
             enemy_projectiles.remove(enemy_projectile)
