@@ -4,46 +4,82 @@ import sys
 
 pygame.init()
 
-width = 800
-height = 600
+width = 1280
+height = 720
 window = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Final Hours")
+pygame.mixer.init()
+pygame.mixer.music.load("./assets/bgmusic.mp3")
+
+# Class for Enemy 
+class ActiveRect(pygame.Rect):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        self.active = True 
+
+# Game Title
+title_font = pygame.font.Font("fancy_font.ttf", 80)
+title_text = title_font.render("Final Hours", True, (255, 255, 255))
+title_rect = title_text.get_rect(center=(width / 2, height / 4))
 
 # Loading screen
 start_font = pygame.font.Font(None, 50)
 start_text = start_font.render("Start Game", True, (255, 255, 255))
-start_rect = start_text.get_rect(center=(width / 2, height / 2 - 50))
+start_rect = start_text.get_rect(center=(width / 2, height * 3 / 4 - 50))
 
 exit_font = pygame.font.Font(None, 50)
 exit_text = exit_font.render("Exit Game", True, (255, 255, 255))
-exit_rect = exit_text.get_rect(center=(width / 2, height / 2 + 50))
+exit_rect = exit_text.get_rect(center=(width / 2, height * 7 / 8))
 
 def start_game_screen():
+    pygame.mixer.music.play(-1)
     while True:
         window.fill((0, 0, 0))
+        window.blit(title_text, title_rect)
         window.blit(start_text, start_rect)
         window.blit(exit_text, exit_rect)
         pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.mixer.music.stop()
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if start_rect.collidepoint(event.pos):
+                    pygame.mixer.music.stop()
                     return 
                 elif exit_rect.collidepoint(event.pos):
+                    pygame.mixer.music.stop()
                     pygame.quit()
                     sys.exit()
-
-start_game_screen()
-
 
 
 # Game Over Screen
 game_over_font = pygame.font.Font(None, 80)
 game_over_text = game_over_font.render("Game Over", True, (255, 0, 0))
 game_over_rect = game_over_text.get_rect(center=(width / 2, height / 2))
+
+# Reset Game 
+def reset_game():
+    global player, enemies, projectiles, enemy_projectiles, enemy_fire_timers, num_enemies
+
+    # Reset player position 
+    player = pygame.Rect(width / 2 - player_width / 2, height - player_height - 10, player_width, player_height)
+
+    # Reset enemies
+    enemies = []
+    for i in range(num_enemies):
+        enemy = ActiveRect(random.randint(0, width - enemy_width), random.randint(-height, 0), enemy_width, enemy_height)
+        enemies.append(enemy)
+    
+    # Reset projectiles
+    enemy_projectiles = []
+    projectiles = [] 
+
+    # Reset enemy fire timers
+    enemy_fire_timers = [random.randint(0, enemy_fire_rate) for _ in range(num_enemies)]
+
 
 
 def game_over_screen():
@@ -60,6 +96,7 @@ def game_over_screen():
                 return 
 
 
+start_game_screen()
 
 # Player
 player_width = 50
@@ -76,7 +113,7 @@ enemy_height = 50
 num_enemies = 6
 enemies = []
 for i in range(num_enemies):
-    enemy = pygame.Rect(random.randint(0, width - enemy_width), random.randint(-height, 0), enemy_width, enemy_height)
+    enemy = ActiveRect(random.randint(0, width - enemy_width), random.randint(-height, 0), enemy_width, enemy_height)
     enemies.append(enemy)
 enemy_color = (255, 0, 0)
 
@@ -85,21 +122,20 @@ pygame.draw.rect(window, enemy_color, enemy)
 # Projectile
 projectile_width = 10
 projectile_height = 20
-projectile_speed = 2
+projectile_speed = 10
 projectiles = []
 projectile_color = (255, 255, 0)
-fire_rate = 10 
+fire_rate = 6 
 fire_counter = 0 
 
 
 # Enemy Projectile 
 enemy_projectile_width = 10
 enemy_projectile_height = 20
-enemy_projectile_speed = 4
+enemy_projectile_speed = 3
 enemy_projectiles = []
 enemy_projectile_color = (0, 255, 255)
-enemy_fire_rate = 120
-# enemy_fire_counter = [random.randint(100,200) for _ in range(num_enemies)]
+enemy_fire_rate = 150
 enemy_fire_timers = [random.randint(0, enemy_fire_rate) for _ in range(num_enemies)]
 
 
@@ -136,8 +172,10 @@ while True:
 
     # Move the enemies and handle enemy projectiles
     for i, enemy in enumerate(enemies):
-        enemy.y += enemy_speed
-        pygame.draw.rect(window, enemy_color, enemy)
+        if enemy.active:
+            enemy.y += enemy_speed
+            pygame.draw.rect(window, enemy_color, enemy)
+       
 
     # Handle enemy shooting
         if enemy_fire_timers[i] == 0:
@@ -155,6 +193,7 @@ while True:
 
         if player.colliderect(enemy_projectile):
             game_over_screen()
+            reset_game() 
             start_game_screen()
         
         if enemy_projectile.y > height:
@@ -178,27 +217,33 @@ while True:
     
     # Collision detection
     for enemy in enemies:
-        if player.colliderect(enemy):
-            pygame.quit()
-            sys.exit()
+        if player.colliderect(enemy) and enemy.active:
+            game_over_screen()
+            reset_game() 
+            start_game_screen()
         
         for projectile in projectiles:
-            if enemy.colliderect(projectile):
+            if enemy.colliderect(projectile) and enemy.active:
                 # explosion_sound.play()
                 projectiles.remove(projectile)
+                enemy.active = False
                 enemies.remove(enemy)
+                num_enemies -= 1
+
         
         # check if enemy is off screen
-        if enemy.y > height:
-            enemies.remove(enemy)
+        if enemy.y > height and enemy.active:
+            enemy.active = False
             num_enemies -= 1
     
     # If all enemies are dead, spawn new ones
-    if len(enemies) == 0:
+    if all(enemy.active == False for enemy in enemies):
         num_enemies += 1 
-        for i in range(num_enemies):
-            enemy = pygame.Rect(random.randint(0, width - enemy_width), random.randint(-height, 0), enemy_width, enemy_height)
-            enemies.append(enemy)
+        for i, enemy in enumerate(enemies):
+            enemy.x = random.randint(0, width - enemy_width)
+            enemy.y = random.randint(-height, 0)
+            enemy.active = True
+            enemy_fire_timers[i] = random.randint(0, enemy_fire_rate)
     
     # Update the display
     pygame.display.update()
