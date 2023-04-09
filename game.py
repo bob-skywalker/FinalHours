@@ -48,8 +48,9 @@ enemy_projectile_height = 20
 enemy_projectile_speed = 4
 enemy_projectiles = []
 enemy_projectile_color = (0, 255, 255)
-enemy_fire_rate = 20
-enemy_fire_counter = [random.randint(100,200) for _ in range(num_enemies)]
+enemy_fire_rate = 120
+# enemy_fire_counter = [random.randint(100,200) for _ in range(num_enemies)]
+enemy_fire_timers = [random.randint(0, enemy_fire_rate) for _ in range(num_enemies)]
 
 
 # Speed Logic
@@ -89,13 +90,13 @@ while True:
         pygame.draw.rect(window, enemy_color, enemy)
 
     # Handle enemy shooting
-    if enemy_fire_counter[i] == 0:
-        enemy_fire_counter[i] = enemy_fire_rate
-        enemy_projectile = pygame.Rect(enemy.x + enemy_width / 2 - enemy_projectile_width / 2, enemy.y + enemy_height, enemy_projectile_width, enemy_projectile_height)
-        enemy_projectiles.append(enemy_projectile)
-        # shoot_sound.play()
-    
-    enemy_fire_counter[i] -= 1
+        if enemy_fire_timers[i] == 0:
+            enemy_fire_timers[i] = enemy_fire_rate
+            enemy_projectile = pygame.Rect(enemy.x + enemy_width / 2 - enemy_projectile_width / 2, enemy.y + enemy_height, enemy_projectile_width, enemy_projectile_height)
+            enemy_projectiles.append(enemy_projectile)
+            # shoot_sound.play()
+        
+        enemy_fire_timers[i] -= 1
 
     # Move and draw the enemy projectiles
     for enemy_projectile in enemy_projectiles:
