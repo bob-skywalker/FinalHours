@@ -105,6 +105,11 @@ while True:
                 # explosion_sound.play()
                 projectiles.remove(projectile)
                 enemies.remove(enemy)
+        
+        # check if enemy is off screen
+        if enemy.y > height:
+            enemies.remove(enemy)
+            num_enemies -= 1
     
     # If all enemies are dead, spawn new ones
     if len(enemies) == 0:
