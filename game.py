@@ -227,6 +227,8 @@ while True:
         pygame.draw.rect(window, projectile_color, projectile)
 
     # Collision detection
+    enmies_to_remove = []
+
     for enemy in enemies:
         if player.colliderect(enemy) and enemy.active:
             game_over_screen()
@@ -238,7 +240,7 @@ while True:
                 # explosion_sound.play()
                 projectiles.remove(projectile)
                 enemy.active = False
-                enemies.remove(enemy)
+                enmies_to_remove.append(enemy)
                 num_enemies -= 1
 
         # check if enemy is off screen
@@ -246,13 +248,18 @@ while True:
             enemy.active = False
             num_enemies -= 1
 
+    for enemy in enmies_to_remove:
+        enemies.remove(enemy)
+
+
     # If all enemies are dead, spawn new ones
     if all(enemy.active == False for enemy in enemies):
-        num_enemies += 1
-        for i, enemy in enumerate(enemies):
-            enemy.x = random.randint(0, width - enemy_width)
-            enemy.y = random.randint(-height, 0)
-            enemy.active = True
+        num_enemies += 5
+        enemies = []
+        for i in range(num_enemies):
+            enemy = ActiveRect(random.randint(0, width - enemy_width),
+                               random.randint(-height, 0), enemy_width, enemy_height)
+            enemies.append(enemy)
             enemy_fire_timers[i] = random.randint(0, enemy_fire_rate)
 
     # Update the display
