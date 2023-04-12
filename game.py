@@ -86,8 +86,8 @@ def reset_game():
     projectiles = []
 
     # Reset enemy fire timers
-    enemy_fire_timers = [random.randint(
-        0, enemy_fire_rate) for _ in range(num_enemies)]
+    # enemy_fire_timers = [random.randint(
+    #     0, enemy_fire_rate) for _ in range(num_enemies)]
 
 
 def game_over_screen():
@@ -151,8 +151,8 @@ enemy_fire_timers = [random.randint(0, enemy_fire_rate)
 
 
 # Speed Logic
-player_speed = 6
-enemy_speed = 2
+player_speed = 7
+enemy_speed = 1.5
 
 clock = pygame.time.Clock()
 
@@ -184,8 +184,8 @@ while True:
     # Move the enemies and handle enemy projectiles
     for i, enemy in enumerate(enemies):
         if enemy.active:
-            enemy.y += enemy_speed
             pygame.draw.rect(window, enemy_color, enemy)
+            enemy.y += enemy_speed
 
     # Handle enemy shooting
         if enemy_fire_timers[i] == 0:
