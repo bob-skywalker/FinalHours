@@ -86,8 +86,7 @@ def reset_game():
     projectiles = []
 
     # Reset enemy fire timers
-    enemy_fire_timers = [random.randint(
-        0, enemy_fire_rate) for _ in range(num_enemies)]
+    enemy_fire_timers = [random.randint(0, enemy_fire_rate) for _ in range(num_enemies)]
 
 
 def game_over_screen():
@@ -256,11 +255,12 @@ while True:
     if all(enemy.active == False for enemy in enemies):
         num_enemies += 5
         enemies = []
+        enemy_fire_timers = []
         for i in range(num_enemies):
             enemy = ActiveRect(random.randint(0, width - enemy_width),
                                random.randint(-height, 0), enemy_width, enemy_height)
             enemies.append(enemy)
-            enemy_fire_timers[i] = random.randint(0, enemy_fire_rate)
+            enemy_fire_timers.append(random.randint(0, enemy_fire_rate))
 
     # Update the display
     pygame.display.update()
