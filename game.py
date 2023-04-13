@@ -37,6 +37,7 @@ exit_rect = exit_text.get_rect(center=(width / 2, height * 7 / 8))
 # Sound
 shooting_sound = pygame.mixer.Sound("./assets/Shooting_sound.wav")
 game_music = "./assets/Game_music.mp3"
+explosion_sound = pygame.mixer.Sound("./assets/Explosion.wav")
 
 # Player Image
 player_image = pygame.image.load("./assets/Player.png")
@@ -222,6 +223,7 @@ while True:
         window.blit(projectile_image, (enemy_projectile.x, enemy_projectile.y))
 
         if player.colliderect(enemy_projectile):
+            explosion_sound.play()
             game_over_screen()
             reset_game()
             pygame.mixer.music.load("./assets/bgmusic.mp3")
@@ -253,6 +255,7 @@ while True:
 
     for enemy in enemies:
         if player.colliderect(enemy) and enemy.active:
+            explosion_sound.play()
             game_over_screen()
             reset_game()
             pygame.mixer.music.load("./assets/bgmusic.mp3")
@@ -261,7 +264,7 @@ while True:
 
         for projectile in projectiles:
             if enemy.colliderect(projectile) and enemy.active:
-                # explosion_sound.play()
+                explosion_sound.play()
                 if projectile in projectiles:
                     projectiles.remove(projectile)
                 enemy.active = False
