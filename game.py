@@ -34,6 +34,23 @@ exit_font = pygame.font.Font(None, 50)
 exit_text = exit_font.render("Exit Game", True, (255, 255, 255))
 exit_rect = exit_text.get_rect(center=(width / 2, height * 7 / 8))
 
+# Sound
+shooting_sound = pygame.mixer.Sound("./assets/Shooting_sound.wav")
+game_music = "./assets/Game_music.mp3"
+
+# Player Image
+player_image = pygame.image.load("./assets/Player.png")
+# double check to resize the image to 50 x 50, even though it's already 50 x 50 lol
+player_image = pygame.transform.scale(player_image, (50, 50))
+
+# Enemy Image
+enemy_image = pygame.image.load("./assets/Enemy.png")
+enemy_image = pygame.transform.scale(enemy_image, (50, 50))
+
+# Projectile Image
+projectile_image = pygame.image.load("./assets/Projectile.png")
+projectile_image = pygame.transform.scale(projectile_image, (10, 20))
+
 
 def start_game_screen():
     pygame.mixer.music.play(-1)
@@ -86,10 +103,12 @@ def reset_game():
     projectiles = []
 
     # Reset enemy fire timers
-    enemy_fire_timers = [random.randint(0, enemy_fire_rate) for _ in range(num_enemies)]
+    enemy_fire_timers = [random.randint(
+        0, enemy_fire_rate) for _ in range(num_enemies)]
 
 
 def game_over_screen():
+    pygame.mixer.music.stop()
     while True:
         window.fill((0, 0, 0))
         window.blit(game_over_text, game_over_rect)
@@ -105,6 +124,7 @@ def game_over_screen():
 
 start_game_screen()
 
+
 # Player
 player_width = 50
 player_height = 50
@@ -112,7 +132,7 @@ player = pygame.Rect(width / 2 - player_width / 2, height -
                      player_height - 10, player_width, player_height)
 player_color = (255, 255, 255)
 
-pygame.draw.rect(window, player_color, player)
+window.blit(player_image, (player.x, player.y))
 
 
 # Enemy
@@ -122,11 +142,11 @@ num_enemies = 6
 enemies = []
 for i in range(num_enemies):
     enemy = ActiveRect(random.randint(0, width - enemy_width),
-                       random.randint(-height, 0), enemy_width, enemy_height)
+                       random.randint(-height // 2, 0), enemy_width, enemy_height)
     enemies.append(enemy)
 enemy_color = (255, 0, 0)
 
-pygame.draw.rect(window, enemy_color, enemy)
+window.blit(enemy_image, (enemy.x, enemy.y))
 
 # Projectile
 projectile_width = 10
@@ -178,12 +198,12 @@ while True:
     window.fill((0, 0, 0))
 
     # Draw the player
-    pygame.draw.rect(window, player_color, player)
+    window.blit(player_image, (player.x, player.y))
 
     # Move the enemies and handle enemy projectiles
     for i, enemy in enumerate(enemies):
         if enemy.active:
-            pygame.draw.rect(window, enemy_color, enemy)
+            window.blit(enemy_image, (enemy.x, enemy.y))
             enemy.y += enemy_speed
 
     # Handle enemy shooting
@@ -199,15 +219,18 @@ while True:
     # Move and draw the enemy projectiles
     for enemy_projectile in enemy_projectiles:
         enemy_projectile.y += enemy_projectile_speed
-        pygame.draw.rect(window, enemy_projectile_color, enemy_projectile)
+        window.blit(projectile_image, (enemy_projectile.x, enemy_projectile.y))
 
         if player.colliderect(enemy_projectile):
             game_over_screen()
             reset_game()
+            pygame.mixer.music.load("./assets/bgmusic.mp3")
+            pygame.mixer.music.play(-1)
             start_game_screen()
 
         if enemy_projectile.y > height:
-            enemy_projectiles.remove(enemy_projectile)
+            if enemy_projectile in enemy_projectiles:
+                enemy_projectiles.remove(enemy_projectile)
 
     # Handle shooting
     if keys[pygame.K_SPACE] and fire_counter == 0:
@@ -215,7 +238,7 @@ while True:
         projectile = pygame.Rect(player.x + player_width / 2 - projectile_width / 2,
                                  player.y - projectile_height, projectile_width, projectile_height)
         projectiles.append(projectile)
-        # shoot_sound.play()
+        shooting_sound.play()
 
     if fire_counter > 0:
         fire_counter -= 1
@@ -223,7 +246,7 @@ while True:
     # Move and draw the projectiles
     for projectile in projectiles:
         projectile.y -= projectile_speed
-        pygame.draw.rect(window, projectile_color, projectile)
+        window.blit(projectile_image, (projectile.x, projectile.y))
 
     # Collision detection
     enmies_to_remove = []
@@ -232,12 +255,15 @@ while True:
         if player.colliderect(enemy) and enemy.active:
             game_over_screen()
             reset_game()
+            pygame.mixer.music.load("./assets/bgmusic.mp3")
+            pygame.mixer.music.play(-1)
             start_game_screen()
 
         for projectile in projectiles:
             if enemy.colliderect(projectile) and enemy.active:
                 # explosion_sound.play()
-                projectiles.remove(projectile)
+                if projectile in projectiles:
+                    projectiles.remove(projectile)
                 enemy.active = False
                 enmies_to_remove.append(enemy)
                 num_enemies -= 1
@@ -250,7 +276,6 @@ while True:
     for enemy in enmies_to_remove:
         enemies.remove(enemy)
 
-
     # If all enemies are dead, spawn new ones
     if all(enemy.active == False for enemy in enemies):
         num_enemies += 5
@@ -258,7 +283,7 @@ while True:
         enemy_fire_timers = []
         for i in range(num_enemies):
             enemy = ActiveRect(random.randint(0, width - enemy_width),
-                               random.randint(-height, 0), enemy_width, enemy_height)
+                               random.randint(-height // 2, 0), enemy_width, enemy_height)
             enemies.append(enemy)
             enemy_fire_timers.append(random.randint(0, enemy_fire_rate))
 
@@ -267,3 +292,10 @@ while True:
 
     # Limit the framerate
     clock.tick(60)
+
+    # Load and play game music
+    if not pygame.mixer.music.get_busy():
+        # Load and play game music
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load(game_music)
+        pygame.mixer.music.play(-1)
